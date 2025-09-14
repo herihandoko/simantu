@@ -1,106 +1,41 @@
 #!/bin/bash
 
-# SIMANTU Quick Deployment Script
-# Script untuk deployment cepat ke VM production
+# Quick Deploy Script for VM
+# Run this script on the VM to update the application
 
-set -e  # Exit on any error
+set -e
 
-echo "⚡ SIMANTU Quick Deployment..."
-
-# Colors for output
-RED='\033[0;31m'
+# Colors
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+echo -e "${BLUE}🚀 Starting quick deployment...${NC}"
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
+# Navigate to project directory
+cd /var/www/simantu
 
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
+# Pull latest changes
+echo -e "${BLUE}📥 Pulling latest changes from GitHub...${NC}"
+git pull origin main
 
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+# Install dependencies and build
+echo -e "${BLUE}🔧 Installing dependencies and building...${NC}"
+cd client && npm install && npm run build
+cd ../server && npm install
 
-# Configuration
-PROJECT_DIR="/var/www/simantu"
-PM2_APP_NAME="simantu-backend"
+# Restart PM2
+echo -e "${BLUE}🔄 Restarting PM2 processes...${NC}"
+pm2 restart simantu-backend
 
-# Check if running as correct user
-if [[ $EUID -eq 0 ]]; then
-   print_error "This script should not be run as root"
-   exit 1
-fi
+# Check status
+echo -e "${BLUE}📊 Checking PM2 status...${NC}"
+pm2 status
 
-# Check if project directory exists
-if [ ! -d "$PROJECT_DIR" ]; then
-    print_error "Project directory $PROJECT_DIR not found. Please run full deployment first."
-    exit 1
-fi
+# Health check
+echo -e "${BLUE}🏥 Performing health check...${NC}"
+sleep 3
+curl -s http://localhost:5001/api/health | grep -q '"status":"OK"' && echo -e "${GREEN}✅ Health check passed!${NC}" || echo -e "${RED}❌ Health check failed!${NC}"
 
-# Quick deployment function
-quick_deploy() {
-    print_status "Starting quick deployment..."
-    
-    # Go to project directory
-    cd "$PROJECT_DIR"
-    
-    # Pull latest changes
-    print_status "Pulling latest changes..."
-    git pull origin main
-    
-    # Install dependencies
-    print_status "Installing dependencies..."
-    npm run install-all
-    
-    # Build frontend
-    print_status "Building frontend..."
-    npm run build
-    
-    # Restart application
-    print_status "Restarting application..."
-    pm2 restart "$PM2_APP_NAME"
-    
-    # Wait for application to start
-    sleep 5
-    
-    # Test application
-    print_status "Testing application..."
-    if curl -f -s http://localhost:5001/api/health > /dev/null 2>&1; then
-        print_success "Application is running"
-    else
-        print_error "Application failed to start"
-        exit 1
-    fi
-    
-    print_success "Quick deployment completed!"
-}
-
-# Main function
-main() {
-    echo "⚡ SIMANTU Quick Deployment"
-    echo "==========================="
-    
-    quick_deploy
-    
-    echo ""
-    print_success "🎉 Quick deployment completed successfully!"
-    echo ""
-    echo "🔧 Useful commands:"
-    echo "- Check status: pm2 status"
-    echo "- View logs: pm2 logs $PM2_APP_NAME"
-    echo "- Monitor: pm2 monit"
-    echo "- Test API: curl http://localhost:5001/api/health"
-}
-
-# Run main function
-main "$@"
+echo -e "${GREEN}🎉 Deployment completed successfully!${NC}"
+echo -e "${GREEN}🌐 Application URL: https://simantu.bantendev.id${NC}"
