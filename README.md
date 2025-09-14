@@ -81,8 +81,15 @@ npm run client
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5001
 
-## 🔐 Default Login
+## 🔐 Default Login Credentials
 
+### Production (Live)
+- **Super Admin**: `admin@simantu.com` / `admin123`
+- **Admin**: `john@example.com` / `password123`
+- **Manager**: `jane@example.com` / `password123`
+- **User**: `bob@example.com` / `password123`
+
+### Local Development
 - **Email**: admin@simantu.com
 - **Password**: admin123
 
@@ -167,9 +174,29 @@ Aplikasi ini fully responsive dan dapat diakses dari:
 
 ## 🚀 Deployment
 
-### Production Build
+### 🌐 Production Status
+- **Live URL**: https://simantu.bantendev.id
+- **Status**: ✅ Online and Running
+- **SSL**: ✅ HTTPS Enabled
+
+### ⚡ Automated Deployment (Recommended)
 ```bash
+# One-command deployment
+deploy "Your commit message here"
+```
+
+**📖 Deployment Documentation**:
+- [🚀 Automated Deployment Guide](./DEPLOYMENT-AUTOMATION.md)
+- [⚡ Quick Deploy Guide](./QUICK-DEPLOY.md)
+- [🔧 Troubleshooting Guide](./TROUBLESHOOTING-DEPLOY.md)
+
+### 🔧 Manual Deployment
+```bash
+# Production build
 npm run build
+
+# Manual deployment
+./deploy-patch.sh "Your commit message"
 ```
 
 ### Environment Variables untuk Production
