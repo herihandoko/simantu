@@ -139,9 +139,11 @@ export default {
       
       if (result.success) {
         console.log('Login successful, user:', authStore.user)
+        console.log('User permissions:', authStore.user.permissions)
         // Get first available path based on user permissions
         const getFirstAvailablePath = (user) => {
           if (!user || !user.permissions) {
+            console.log('No user or permissions, returning /')
             return '/'
           }
           
@@ -159,12 +161,15 @@ export default {
           
           // Find first route user has permission for
           for (const route of availableRoutes) {
+            console.log(`Checking route ${route.path} with permission ${route.permission}`)
             if (user.permissions.includes(route.permission)) {
+              console.log(`Found matching route: ${route.path}`)
               return route.path
             }
           }
           
           // Fallback to root if no permissions found
+          console.log('No matching route found, returning /')
           return '/'
         }
         
