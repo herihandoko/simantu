@@ -97,7 +97,7 @@
                   type="password"
                   :required="showCreateModal"
                   class="input-field mt-1"
-                  placeholder="Enter password"
+                  :placeholder="showCreateModal ? 'Enter password' : 'Leave empty to keep current password'"
                 />
               </div>
               
@@ -130,6 +130,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import {
   PlusIcon,
   PencilSquareIcon,
@@ -176,10 +177,32 @@ export default {
 
     const handleSubmit = async () => {
       try {
+        // Prepare data for submission
+        const submitData = { ...form }
+        
+        // For update, don't send password if it's empty
+        if (!showCreateModal.value && !submitData.password) {
+          delete submitData.password
+        }
+        
         if (showCreateModal.value) {
-          await axios.post('/api/users', form)
+          await axios.post('/api/users', submitData)
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'User created successfully',
+            timer: 2000,
+            showConfirmButton: false
+          })
         } else {
-          await axios.put(`/api/users/${editingUser.value.id}`, form)
+          await axios.put(`/api/users/${editingUser.value.id}`, submitData)
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'User updated successfully',
+            timer: 2000,
+            showConfirmButton: false
+          })
         }
         
         await fetchUsers()
@@ -187,7 +210,13 @@ export default {
         resetForm()
       } catch (error) {
         console.error('Error saving user:', error)
-        alert('Error saving user: ' + (error.response?.data?.message || 'Unknown error'))
+        const errorMessage = error.response?.data?.message || 'Unknown error'
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Error saving user: ${errorMessage}`,
+          confirmButtonText: 'OK'
+        })
       }
     }
 
@@ -201,13 +230,37 @@ export default {
     }
 
     const deleteUser = async (user) => {
-      if (confirm(`Are you sure you want to delete ${user.name}?`)) {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete ${user.name}. This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      })
+
+      if (result.isConfirmed) {
         try {
           await axios.delete(`/api/users/${user.id}`)
+          await Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: `${user.name} has been deleted successfully`,
+            timer: 2000,
+            showConfirmButton: false
+          })
           await fetchUsers()
         } catch (error) {
           console.error('Error deleting user:', error)
-          alert('Error deleting user: ' + (error.response?.data?.message || 'Unknown error'))
+          const errorMessage = error.response?.data?.message || 'Unknown error'
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: `Error deleting user: ${errorMessage}`,
+            confirmButtonText: 'OK'
+          })
         }
       }
     }
