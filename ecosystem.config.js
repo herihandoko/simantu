@@ -65,7 +65,7 @@ module.exports = {
   deploy: {
     production: {
       user: 'ubuntu',
-      host: 'your-server-ip',
+      host: '103.215.154.196',
       ref: 'origin/main',
       repo: 'https://github.com/herihandoko/simantu.git',
       path: '/var/www/simantu',

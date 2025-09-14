@@ -207,7 +207,7 @@ DB_PASSWORD=simantu_password_2024
 DB_NAME=simantu_db
 JWT_SECRET=simantu_jwt_secret_production_2024_$(openssl rand -hex 32)
 PORT=5001
-CORS_ORIGIN=https://yourdomain.com
+CORS_ORIGIN=https://simantu.bantendev.id
 EOF
     
     print_success "Production environment file created"
@@ -258,7 +258,7 @@ setup_nginx() {
     sudo tee $NGINX_CONFIG > /dev/null << EOF
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name simantu.bantendev.id www.simantu.bantendev.id;
     
     # Redirect HTTP to HTTPS
     return 301 https://\$server_name\$request_uri;
@@ -266,7 +266,7 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name simantu.bantendev.id www.simantu.bantendev.id;
     
     # SSL Configuration (you need to obtain SSL certificates)
     # ssl_certificate /path/to/your/certificate.crt;
