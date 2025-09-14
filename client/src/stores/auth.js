@@ -25,10 +25,8 @@ export const useAuthStore = defineStore('auth', {
 
     async login(credentials) {
       this.isLoading = true
-      console.log('Auth store: Starting login with credentials:', credentials)
       try {
         const response = await axios.post('/api/auth/login', credentials)
-        console.log('Auth store: Login response:', response.data)
         const { token, user } = response.data
         
         this.token = token
@@ -36,10 +34,8 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('token', token)
         
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-        console.log('Auth store: Login successful, user set:', this.user)
         return { success: true }
       } catch (error) {
-        console.error('Auth store: Login error:', error)
         return {
           success: false,
           message: error.response?.data?.message || 'Login failed'

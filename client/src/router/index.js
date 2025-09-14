@@ -82,7 +82,6 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  console.log('Router guard: Navigating to', to.path, 'from', from.path)
   
   // If user has token but no user data, try to fetch user
   if (authStore.token && !authStore.user) {
@@ -94,39 +93,30 @@ router.beforeEach(async (to, from, next) => {
   }
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    console.log('Router guard: Not authenticated, redirecting to login')
     next('/login')
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
     // Redirect to first available page after login
-    console.log('Router guard: Authenticated user accessing guest route, redirecting')
     const firstAvailablePath = getFirstAvailablePath(authStore.user)
     next(firstAvailablePath)
   } else if (to.path === '/' && authStore.isAuthenticated) {
     // If accessing root path and authenticated, check if user has permission for dashboard
-    console.log('Router guard: Accessing root path, checking dashboard permission')
     if (authStore.user && authStore.user.permissions && authStore.user.permissions.includes('dashboard.read')) {
-      console.log('Router guard: Dashboard permission found, allowing access')
       next() // Allow access to dashboard
     } else {
-      console.log('Router guard: No dashboard permission, redirecting to first available')
       // Redirect to first available page if no dashboard permission
       const firstAvailablePath = getFirstAvailablePath(authStore.user)
       next(firstAvailablePath)
     }
   } else if (to.meta.permission && authStore.isAuthenticated) {
     // Check if user has permission to access this route
-    console.log('Router guard: Checking permission for route', to.path, 'required:', to.meta.permission)
     if (!authStore.user || !authStore.user.permissions || !authStore.user.permissions.includes(to.meta.permission)) {
-      console.log('Router guard: No permission for route, redirecting')
       // Redirect to first available page if no permission
       const firstAvailablePath = getFirstAvailablePath(authStore.user)
       next(firstAvailablePath)
     } else {
-      console.log('Router guard: Permission found, allowing access')
       next()
     }
   } else {
-    console.log('Router guard: No special conditions, allowing access')
     next()
   }
 })
