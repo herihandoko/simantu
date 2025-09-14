@@ -127,7 +127,24 @@ function getFirstAvailablePath(user) {
     return '/'
   }
   
-  // Define available routes with their permissions
+  // Role-based redirect logic (same as Login.vue)
+  const roleName = user.role ? user.role.toLowerCase() : ''
+  
+  // 1. Tenaga Ahli → expert-dashboard
+  if (roleName === 'tenaga ahli') {
+    if (user.permissions.includes('dashboard.read')) {
+      return '/expert-dashboard'
+    }
+  }
+  
+  // 2. Manager → analytics
+  if (roleName === 'manager') {
+    if (user.permissions.includes('analytics.read')) {
+      return '/analytics'
+    }
+  }
+  
+  // 3. Default fallback: Get first available path based on permissions
   const availableRoutes = [
     { path: '/', permission: 'dashboard.read' },
     { path: '/users', permission: 'users.read' },
@@ -146,7 +163,7 @@ function getFirstAvailablePath(user) {
     }
   }
   
-  // Fallback to root if no permissions found
+  // Final fallback to dashboard utama
   return '/'
 }
 

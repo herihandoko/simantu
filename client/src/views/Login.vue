@@ -136,37 +136,58 @@ export default {
       const result = await authStore.login(form)
       
       if (result.success) {
-        // Get first available path based on user permissions
-        const getFirstAvailablePath = (user) => {
-          if (!user || !user.permissions) {
+        // Get redirect path based on user role and permissions
+        const getRedirectPath = (user) => {
+          if (!user || !user.role) {
             return '/'
           }
           
-          // Define available routes with their permissions
-          const availableRoutes = [
-            { path: '/', permission: 'dashboard.read' },
-            { path: '/users', permission: 'users.read' },
-            { path: '/roles', permission: 'roles.read' },
-            { path: '/configs', permission: 'configs.read' },
-            { path: '/tasks', permission: 'tasks.read' },
-            { path: '/opd', permission: 'opd.read' },
-            { path: '/analytics', permission: 'analytics.read' },
-            { path: '/expert-dashboard', permission: 'dashboard.read' }
-          ]
+          // Role-based redirect logic
+          const roleName = user.role.toLowerCase()
           
-          // Find first route user has permission for
-          for (const route of availableRoutes) {
-            if (user.permissions.includes(route.permission)) {
-              return route.path
+          // 1. Tenaga Ahli → expert-dashboard
+          if (roleName === 'tenaga ahli') {
+            // Check if user has permission for expert-dashboard
+            if (user.permissions && user.permissions.includes('dashboard.read')) {
+              return '/expert-dashboard'
             }
           }
           
-          // Fallback to root if no permissions found
+          // 2. Manager → analytics
+          if (roleName === 'manager') {
+            // Check if user has permission for analytics
+            if (user.permissions && user.permissions.includes('analytics.read')) {
+              return '/analytics'
+            }
+          }
+          
+          // 3. Default fallback: Get first available path based on permissions
+          if (user.permissions) {
+            const availableRoutes = [
+              { path: '/', permission: 'dashboard.read' },
+              { path: '/users', permission: 'users.read' },
+              { path: '/roles', permission: 'roles.read' },
+              { path: '/configs', permission: 'configs.read' },
+              { path: '/tasks', permission: 'tasks.read' },
+              { path: '/opd', permission: 'opd.read' },
+              { path: '/analytics', permission: 'analytics.read' },
+              { path: '/expert-dashboard', permission: 'dashboard.read' }
+            ]
+            
+            // Find first route user has permission for
+            for (const route of availableRoutes) {
+              if (user.permissions.includes(route.permission)) {
+                return route.path
+              }
+            }
+          }
+          
+          // Final fallback to dashboard utama
           return '/'
         }
         
-        const dashboardPath = getFirstAvailablePath(authStore.user)
-        router.push(dashboardPath)
+        const redirectPath = getRedirectPath(authStore.user)
+        router.push(redirectPath)
       } else {
         errorMessage.value = result.message
       }
