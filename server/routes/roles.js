@@ -102,7 +102,7 @@ router.post('/', authenticateToken, [
     )
 
     const role = roles[0]
-    role.permissions = JSON.parse(role.permissions || '[]')
+    role.permissions = typeof role.permissions === 'string' ? JSON.parse(role.permissions || '[]') : role.permissions
 
     res.status(201).json(role)
   } catch (error) {
@@ -184,7 +184,7 @@ router.put('/:id', authenticateToken, [
     )
 
     const role = roles[0]
-    role.permissions = JSON.parse(role.permissions || '[]')
+    role.permissions = typeof role.permissions === 'string' ? JSON.parse(role.permissions || '[]') : role.permissions
 
     res.json(role)
   } catch (error) {
