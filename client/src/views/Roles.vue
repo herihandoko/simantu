@@ -61,7 +61,7 @@
 
     <!-- Create/Edit Role Modal -->
     <div v-if="showCreateModal || showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div class="mt-3">
           <h3 class="text-lg font-medium text-gray-900 mb-4">
             {{ showCreateModal ? 'Create Role' : 'Edit Role' }}
@@ -92,7 +92,7 @@
               
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
-                <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
                   <label v-for="permission in availablePermissions" :key="permission" class="flex items-center">
                     <input
                       v-model="form.permissions"
@@ -124,6 +124,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import {
   PlusIcon,
   PencilSquareIcon,
@@ -145,18 +146,35 @@ export default {
     })
 
     const availablePermissions = [
+      // User Management
       'users.read',
       'users.create',
       'users.update',
       'users.delete',
+      // Role Management
       'roles.read',
       'roles.create',
       'roles.update',
       'roles.delete',
+      // Configuration Management
       'configs.read',
       'configs.create',
       'configs.update',
-      'configs.delete'
+      'configs.delete',
+      // Task Management
+      'tasks.read',
+      'tasks.create',
+      'tasks.update',
+      'tasks.delete',
+      // OPD Management
+      'opd.read',
+      'opd.create',
+      'opd.update',
+      'opd.delete',
+      // Analytics
+      'analytics.read',
+      // Dashboard
+      'dashboard.read'
     ]
 
     const formatDate = (dateString) => {
@@ -181,8 +199,22 @@ export default {
 
         if (showCreateModal.value) {
           await axios.post('/api/roles', roleData)
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Role created successfully',
+            timer: 2000,
+            showConfirmButton: false
+          })
         } else {
           await axios.put(`/api/roles/${editingRole.value.id}`, roleData)
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Role updated successfully',
+            timer: 2000,
+            showConfirmButton: false
+          })
         }
         
         await fetchRoles()
@@ -190,7 +222,13 @@ export default {
         resetForm()
       } catch (error) {
         console.error('Error saving role:', error)
-        alert('Error saving role: ' + (error.response?.data?.message || 'Unknown error'))
+        const errorMessage = error.response?.data?.message || 'Unknown error'
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Error saving role: ${errorMessage}`,
+          confirmButtonText: 'OK'
+        })
       }
     }
 
@@ -204,17 +242,46 @@ export default {
 
     const deleteRole = async (role) => {
       if (role.user_count > 0) {
-        alert('Cannot delete role that is assigned to users')
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Cannot Delete',
+          text: 'Cannot delete role that is assigned to users',
+          confirmButtonText: 'OK'
+        })
         return
       }
 
-      if (confirm(`Are you sure you want to delete ${role.name}?`)) {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to delete ${role.name}. This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      })
+
+      if (result.isConfirmed) {
         try {
           await axios.delete(`/api/roles/${role.id}`)
+          await Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: `${role.name} has been deleted successfully`,
+            timer: 2000,
+            showConfirmButton: false
+          })
           await fetchRoles()
         } catch (error) {
           console.error('Error deleting role:', error)
-          alert('Error deleting role: ' + (error.response?.data?.message || 'Unknown error'))
+          const errorMessage = error.response?.data?.message || 'Unknown error'
+          await Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: `Error deleting role: ${errorMessage}`,
+            confirmButtonText: 'OK'
+          })
         }
       }
     }
