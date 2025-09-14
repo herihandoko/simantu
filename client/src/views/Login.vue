@@ -107,15 +107,6 @@
             </button>
           </div>
         </form>
-
-        <!-- Demo Credentials -->
-        <div class="mt-6 p-3 bg-secondary-50 rounded-lg border border-secondary-200">
-          <h3 class="text-xs font-semibold text-secondary-800 mb-1">Demo Credentials</h3>
-          <div class="text-xs text-secondary-700 space-y-0.5">
-            <p><strong>Email:</strong> admin@simantu.com</p>
-            <p><strong>Password:</strong> admin123</p>
-          </div>
-        </div>
       </div>
     </div>
   </div>
