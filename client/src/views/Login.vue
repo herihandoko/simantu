@@ -136,23 +136,36 @@ export default {
       const result = await authStore.login(form)
       
       if (result.success) {
-        // Get role-based dashboard path
-        const getRoleBasedPath = (userRole) => {
-          switch (userRole?.toLowerCase()) {
-            case 'manager':
-            case 'pm':
-            case 'project manager':
-              return '/analytics'
-            case 'tenaga ahli':
-            case 'expert':
-            case 'staff':
-              return '/expert-dashboard'
-            default:
-              return '/analytics' // Default to analytics dashboard
+        // Get first available path based on user permissions
+        const getFirstAvailablePath = (user) => {
+          if (!user || !user.permissions) {
+            return '/'
           }
+          
+          // Define available routes with their permissions
+          const availableRoutes = [
+            { path: '/', permission: 'dashboard.read' },
+            { path: '/users', permission: 'users.read' },
+            { path: '/roles', permission: 'roles.read' },
+            { path: '/configs', permission: 'configs.read' },
+            { path: '/tasks', permission: 'tasks.read' },
+            { path: '/opd', permission: 'opd.read' },
+            { path: '/analytics', permission: 'analytics.read' },
+            { path: '/expert-dashboard', permission: 'dashboard.read' }
+          ]
+          
+          // Find first route user has permission for
+          for (const route of availableRoutes) {
+            if (user.permissions.includes(route.permission)) {
+              return route.path
+            }
+          }
+          
+          // Fallback to root if no permissions found
+          return '/'
         }
         
-        const dashboardPath = getRoleBasedPath(authStore.userRole)
+        const dashboardPath = getFirstAvailablePath(authStore.user)
         router.push(dashboardPath)
       } else {
         errorMessage.value = result.message
