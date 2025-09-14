@@ -26,42 +26,50 @@ const routes = [
       {
         path: '',
         name: 'Dashboard',
-        component: () => import('../views/Dashboard.vue')
+        component: () => import('../views/Dashboard.vue'),
+        meta: { permission: 'dashboard.read' }
       },
       {
         path: '/users',
         name: 'Users',
-        component: () => import('../views/Users.vue')
+        component: () => import('../views/Users.vue'),
+        meta: { permission: 'users.read' }
       },
       {
         path: '/roles',
         name: 'Roles',
-        component: () => import('../views/Roles.vue')
+        component: () => import('../views/Roles.vue'),
+        meta: { permission: 'roles.read' }
       },
       {
         path: '/configs',
         name: 'Configs',
-        component: () => import('../views/Configs.vue')
+        component: () => import('../views/Configs.vue'),
+        meta: { permission: 'configs.read' }
       },
       {
         path: '/tasks',
         name: 'Tasks',
-        component: () => import('../views/Tasks.vue')
+        component: () => import('../views/Tasks.vue'),
+        meta: { permission: 'tasks.read' }
       },
       {
         path: '/opd',
         name: 'OPD',
-        component: () => import('../views/OPD.vue')
+        component: () => import('../views/OPD.vue'),
+        meta: { permission: 'opd.read' }
       },
       {
         path: '/analytics',
         name: 'AnalyticsDashboard',
-        component: () => import('../views/AnalyticsDashboard.vue')
+        component: () => import('../views/AnalyticsDashboard.vue'),
+        meta: { permission: 'analytics.read' }
       },
       {
         path: '/expert-dashboard',
         name: 'ExpertDashboard',
-        component: () => import('../views/ExpertDashboard.vue')
+        component: () => import('../views/ExpertDashboard.vue'),
+        meta: { permission: 'dashboard.read' }
       }
     ]
   }
@@ -87,19 +95,57 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    // Redirect to role-based dashboard after login
-    const roleBasedPath = getRoleBasedPath(authStore.userRole)
-    next(roleBasedPath)
+    // Redirect to first available page after login
+    const firstAvailablePath = getFirstAvailablePath(authStore.user)
+    next(firstAvailablePath)
   } else if (to.path === '/' && authStore.isAuthenticated) {
-    // If accessing root path and authenticated, redirect to role-based dashboard
-    const roleBasedPath = getRoleBasedPath(authStore.userRole)
-    next(roleBasedPath)
+    // If accessing root path and authenticated, redirect to first available page
+    const firstAvailablePath = getFirstAvailablePath(authStore.user)
+    next(firstAvailablePath)
+  } else if (to.meta.permission && authStore.isAuthenticated) {
+    // Check if user has permission to access this route
+    if (!authStore.user || !authStore.user.permissions || !authStore.user.permissions.includes(to.meta.permission)) {
+      // Redirect to first available page if no permission
+      const firstAvailablePath = getFirstAvailablePath(authStore.user)
+      next(firstAvailablePath)
+    } else {
+      next()
+    }
   } else {
     next()
   }
 })
 
-// Function to determine dashboard path based on user role
+// Function to get first available path based on user permissions
+function getFirstAvailablePath(user) {
+  if (!user || !user.permissions) {
+    return '/'
+  }
+  
+  // Define available routes with their permissions
+  const availableRoutes = [
+    { path: '/', permission: 'dashboard.read' },
+    { path: '/users', permission: 'users.read' },
+    { path: '/roles', permission: 'roles.read' },
+    { path: '/configs', permission: 'configs.read' },
+    { path: '/tasks', permission: 'tasks.read' },
+    { path: '/opd', permission: 'opd.read' },
+    { path: '/analytics', permission: 'analytics.read' },
+    { path: '/expert-dashboard', permission: 'dashboard.read' }
+  ]
+  
+  // Find first route user has permission for
+  for (const route of availableRoutes) {
+    if (user.permissions.includes(route.permission)) {
+      return route.path
+    }
+  }
+  
+  // Fallback to root if no permissions found
+  return '/'
+}
+
+// Function to determine dashboard path based on user role (kept for backward compatibility)
 function getRoleBasedPath(userRole) {
   switch (userRole?.toLowerCase()) {
     case 'manager':
