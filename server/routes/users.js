@@ -56,7 +56,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Create user
 router.post('/', authenticateToken, [
   body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
+  body('email').isEmail().withMessage('Valid email required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role_id').isInt().withMessage('Valid role ID required')
 ], async (req, res) => {
@@ -109,7 +109,7 @@ router.post('/', authenticateToken, [
 // Update user
 router.put('/:id', authenticateToken, [
   body('name').optional().trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
-  body('email').optional().isEmail().normalizeEmail().withMessage('Valid email required'),
+  body('email').optional().isEmail().withMessage('Valid email required'),
   body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role_id').optional().isInt().withMessage('Valid role ID required')
 ], async (req, res) => {

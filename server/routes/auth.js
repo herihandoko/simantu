@@ -9,7 +9,7 @@ const router = express.Router()
 
 // Login
 router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail(),
   body('password').isLength({ min: 6 })
 ], async (req, res) => {
   try {
