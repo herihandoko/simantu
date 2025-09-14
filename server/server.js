@@ -10,6 +10,7 @@ const roleRoutes = require('./routes/roles')
 const configRoutes = require('./routes/configs')
 const taskRoutes = require('./routes/tasks')
 const opdRoutes = require('./routes/opd')
+const healthRoutes = require('./routes/health')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -26,15 +27,7 @@ app.use('/api/roles', roleRoutes)
 app.use('/api/configs', configRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/opd', opdRoutes)
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    message: 'SIMANTU API is running'
-  })
-})
+app.use('/api/health', healthRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
