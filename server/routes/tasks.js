@@ -339,8 +339,7 @@ router.get('/analytics/overview', authenticateToken, async (req, res) => {
         SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_tasks,
         SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_tasks,
         SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_tasks,
-        AVG(progress_percentage) as avg_progress,
-        SUM(CASE WHEN tanggal_selesai < CURDATE() AND status != 'completed' THEN 1 ELSE 0 END) as overdue_tasks
+        SUM(CASE WHEN due_date < CURDATE() AND status != 'completed' THEN 1 ELSE 0 END) as overdue_tasks
       FROM tasks
     `)
     

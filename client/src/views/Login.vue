@@ -132,10 +132,13 @@ export default {
 
     const handleLogin = async () => {
       errorMessage.value = ''
+      console.log('Starting login process...')
       
       const result = await authStore.login(form)
+      console.log('Login result:', result)
       
       if (result.success) {
+        console.log('Login successful, user:', authStore.user)
         // Get first available path based on user permissions
         const getFirstAvailablePath = (user) => {
           if (!user || !user.permissions) {
@@ -166,6 +169,7 @@ export default {
         }
         
         const dashboardPath = getFirstAvailablePath(authStore.user)
+        console.log('Redirecting to:', dashboardPath)
         router.push(dashboardPath)
       } else {
         errorMessage.value = result.message
