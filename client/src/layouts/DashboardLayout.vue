@@ -160,16 +160,24 @@ export default {
     // Sidebar collapse state
     const isCollapsed = ref(false)
 
-    const menuItems = [
-      { name: 'Dashboard', path: '/', icon: HomeIcon },
-      { name: 'Users', path: '/users', icon: UsersIcon },
-      { name: 'Roles', path: '/roles', icon: ShieldCheckIcon },
-      { name: 'Configs', path: '/configs', icon: CogIcon },
-      { name: 'Tasks', path: '/tasks', icon: ClipboardDocumentListIcon },
-      { name: 'Master OPD', path: '/opd', icon: BuildingOfficeIcon },
-      { name: 'Analytics', path: '/analytics', icon: ChartBarIcon },
-      { name: 'My Dashboard', path: '/expert-dashboard', icon: UserIcon }
-    ]
+    const menuItems = computed(() => {
+      const allMenuItems = [
+        { name: 'Dashboard', path: '/', icon: HomeIcon, permission: 'dashboard.read' },
+        { name: 'Users', path: '/users', icon: UsersIcon, permission: 'users.read' },
+        { name: 'Roles', path: '/roles', icon: ShieldCheckIcon, permission: 'roles.read' },
+        { name: 'Configs', path: '/configs', icon: CogIcon, permission: 'configs.read' },
+        { name: 'Tasks', path: '/tasks', icon: ClipboardDocumentListIcon, permission: 'tasks.read' },
+        { name: 'Master OPD', path: '/opd', icon: BuildingOfficeIcon, permission: 'opd.read' },
+        { name: 'Analytics', path: '/analytics', icon: ChartBarIcon, permission: 'analytics.read' },
+        { name: 'My Dashboard', path: '/expert-dashboard', icon: UserIcon, permission: 'dashboard.read' }
+      ]
+      
+      // Filter menu items based on user permissions
+      return allMenuItems.filter(item => {
+        if (!authStore.user || !authStore.user.permissions) return false
+        return authStore.user.permissions.includes(item.permission)
+      })
+    })
 
     const currentPageTitle = computed(() => {
       const currentItem = menuItems.find(item => item.path === route.path)

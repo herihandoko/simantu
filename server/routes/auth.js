@@ -45,9 +45,28 @@ router.post('/login', [
       { expiresIn: '24h' }
     )
 
+    // Get role permissions
+    const [roles] = await db.execute(
+      'SELECT permissions FROM roles WHERE id = ?',
+      [user.role_id]
+    )
+    
+    let permissions = []
+    if (roles.length > 0 && roles[0].permissions) {
+      try {
+        permissions = typeof roles[0].permissions === 'string' 
+          ? JSON.parse(roles[0].permissions) 
+          : roles[0].permissions
+      } catch (error) {
+        console.error('Error parsing permissions:', error)
+        permissions = []
+      }
+    }
+
     // Return user data without password
     const { password: _, ...userWithoutPassword } = user
     userWithoutPassword.role = userWithoutPassword.role_name
+    userWithoutPassword.permissions = permissions
     delete userWithoutPassword.role_name
 
     res.json({
@@ -64,7 +83,7 @@ router.post('/login', [
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const [users] = await db.execute(
-      'SELECT u.id, u.name, u.email, u.role_id, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = ?',
+      'SELECT u.id, u.name, u.email, u.role_id, r.name as role_name, r.permissions FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.id = ?',
       [req.user.id]
     )
 
@@ -74,6 +93,21 @@ router.get('/me', authenticateToken, async (req, res) => {
 
     const user = users[0]
     user.role = user.role_name
+    
+    // Parse permissions
+    let permissions = []
+    if (user.permissions) {
+      try {
+        permissions = typeof user.permissions === 'string' 
+          ? JSON.parse(user.permissions) 
+          : user.permissions
+      } catch (error) {
+        console.error('Error parsing permissions:', error)
+        permissions = []
+      }
+    }
+    user.permissions = permissions
+    
     delete user.role_name
 
     res.json(user)
