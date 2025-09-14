@@ -161,6 +161,7 @@ export default {
     const isCollapsed = ref(false)
 
     const menuItems = computed(() => {
+      console.log('DashboardLayout: Computing menu items, user:', authStore.user)
       const allMenuItems = [
         { name: 'Dashboard', path: '/', icon: HomeIcon, permission: 'dashboard.read' },
         { name: 'Users', path: '/users', icon: UsersIcon, permission: 'users.read' },
@@ -173,19 +174,27 @@ export default {
       ]
       
       // Filter menu items based on user permissions
-      return allMenuItems.filter(item => {
-        if (!authStore.user || !authStore.user.permissions) return false
-        return authStore.user.permissions.includes(item.permission)
+      const filteredItems = allMenuItems.filter(item => {
+        if (!authStore.user || !authStore.user.permissions) {
+          console.log('DashboardLayout: No user or permissions, filtering out item:', item.name)
+          return false
+        }
+        const hasPermission = authStore.user.permissions.includes(item.permission)
+        console.log('DashboardLayout: Item', item.name, 'has permission', item.permission, ':', hasPermission)
+        return hasPermission
       })
+      
+      console.log('DashboardLayout: Filtered menu items:', filteredItems)
+      return filteredItems
     })
 
     const currentPageTitle = computed(() => {
-      const currentItem = menuItems.find(item => item.path === route.path)
+      const currentItem = menuItems.value?.find(item => item.path === route.path)
       return currentItem ? currentItem.name : 'Dashboard'
     })
 
     const currentPageIcon = computed(() => {
-      const currentItem = menuItems.find(item => item.path === route.path)
+      const currentItem = menuItems.value?.find(item => item.path === route.path)
       return currentItem ? currentItem.icon : HomeIcon
     })
 
