@@ -377,6 +377,7 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
+import Swal from 'sweetalert2'
 import {
   PlusIcon,
   PencilSquareIcon,
@@ -513,7 +514,15 @@ export default {
 
     const fetchTasks = async () => {
       try {
-        const response = await axios.get('/api/tasks')
+        let response
+        // Filter data berdasarkan role
+        if (authStore.user && authStore.user.role && authStore.user.role.toLowerCase() === 'tenaga ahli') {
+          // Untuk Tenaga Ahli, hanya tampilkan tasks yang assigned ke user tersebut
+          response = await axios.get(`/api/tasks/user/${authStore.user.id}`)
+        } else {
+          // Untuk role lain, tampilkan semua tasks
+          response = await axios.get('/api/tasks')
+        }
         tasks.value = response.data
       } catch (error) {
         console.error('Error fetching tasks:', error)
@@ -577,8 +586,20 @@ export default {
 
         await fetchTasks()
         closeModal()
+        Swal.fire({
+          title: 'Berhasil!',
+          text: showEditModal.value ? 'Task berhasil diupdate.' : 'Task berhasil dibuat.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        })
       } catch (error) {
         console.error('Error saving task:', error)
+        Swal.fire({
+          title: 'Error!',
+          text: 'Terjadi kesalahan saat menyimpan task.',
+          icon: 'error'
+        })
       } finally {
         isLoading.value = false
       }
@@ -608,12 +629,35 @@ export default {
     }
 
     const deleteTask = async (task) => {
-      if (confirm(`Apakah Anda yakin ingin menghapus "${task.nama_pekerjaan || task.tugas}"?`)) {
+      const result = await Swal.fire({
+        title: 'Konfirmasi Hapus',
+        text: `Apakah Anda yakin ingin menghapus "${task.nama_pekerjaan || task.tugas}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+      })
+
+      if (result.isConfirmed) {
         try {
           await axios.delete(`/api/tasks/${task.id}`)
           await fetchTasks()
+          Swal.fire({
+            title: 'Berhasil!',
+            text: 'Task berhasil dihapus.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+          })
         } catch (error) {
           console.error('Error deleting task:', error)
+          Swal.fire({
+            title: 'Error!',
+            text: 'Terjadi kesalahan saat menghapus task.',
+            icon: 'error'
+          })
         }
       }
     }

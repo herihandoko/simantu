@@ -220,7 +220,7 @@
         <div v-for="activity in recentActivities" :key="activity.id" class="flex items-start space-x-3">
           <div class="flex-shrink-0">
             <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-              <component :is="activity.icon" class="w-4 h-4 text-primary-600" />
+              <component :is="getActivityIcon(activity.icon)" class="w-4 h-4 text-primary-600" />
             </div>
           </div>
           <div class="flex-1 min-w-0">
@@ -318,29 +318,13 @@ export default {
 
     const fetchRecentActivities = async () => {
       try {
-        // Mock data for recent activities
-        recentActivities.value = [
-          {
-            id: 1,
-            description: 'Tugas "Setup Development Environment" telah diselesaikan',
-            created_at: new Date().toISOString(),
-            icon: CheckCircleIcon
-          },
-          {
-            id: 2,
-            description: 'Tugas baru "API Documentation" telah dibuat',
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            icon: PlusIcon
-          },
-          {
-            id: 3,
-            description: 'Progress tugas "Design User Interface" diupdate ke 75%',
-            created_at: new Date(Date.now() - 7200000).toISOString(),
-            icon: PencilSquareIcon
-          }
-        ]
+        // Fetch real recent activities from tasks
+        const response = await axios.get('/api/tasks/recent-activities')
+        recentActivities.value = response.data
       } catch (error) {
         console.error('Error fetching recent activities:', error)
+        // Fallback to empty array if API fails
+        recentActivities.value = []
       }
     }
 
@@ -433,6 +417,16 @@ export default {
       return 'text-gray-600'
     }
 
+    const getActivityIcon = (iconName) => {
+      const iconMap = {
+        'CheckCircleIcon': CheckCircleIcon,
+        'ClockIcon': ClockIcon,
+        'PlusIcon': PlusIcon,
+        'PencilSquareIcon': PencilSquareIcon
+      }
+      return iconMap[iconName] || PencilSquareIcon
+    }
+
     onMounted(() => {
       refreshData()
     })
@@ -453,6 +447,7 @@ export default {
       formatDate,
       getDaysUntilDeadline,
       getDeadlineClass,
+      getActivityIcon,
       ClipboardDocumentListIcon,
       CheckCircleIcon,
       ClockIcon,

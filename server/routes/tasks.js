@@ -63,6 +63,33 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 })
 
+// Get tasks for specific user (for Tenaga Ahli)
+router.get('/user/:userId', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.userId
+    const [tasks] = await db.execute(`
+      SELECT t.*, 
+             u1.name as assigned_to_name, 
+             u2.name as created_by_name,
+             o.nama_opd,
+             o.kode_opd,
+             u3.name as tenaga_ahli_nama,
+             u3.email as tenaga_ahli_email
+      FROM tasks t 
+      LEFT JOIN users u1 ON t.assigned_to = u1.id 
+      LEFT JOIN users u2 ON t.created_by = u2.id
+      LEFT JOIN opd o ON t.opd_id = o.id
+      LEFT JOIN users u3 ON t.tenaga_ahli_id = u3.id
+      WHERE t.assigned_to = ? OR t.tenaga_ahli_id = ?
+      ORDER BY t.created_at DESC
+    `, [userId, userId])
+    res.json(tasks)
+  } catch (error) {
+    console.error('Get user tasks error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
 // Get task by ID
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
@@ -403,6 +430,71 @@ router.get('/analytics/overview', authenticateToken, async (req, res) => {
     })
   } catch (error) {
     console.error('Get analytics error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Get recent activities
+router.get('/recent-activities', authenticateToken, async (req, res) => {
+  try {
+    const [activities] = await db.execute(`
+      SELECT 
+        t.id,
+        t.nama_pekerjaan,
+        t.status,
+        t.progress_percentage,
+        t.updated_at as created_at,
+        u1.name as assigned_to_name,
+        u2.name as created_by_name,
+        o.nama_opd,
+        CASE 
+          WHEN t.status = 'completed' THEN 'completed'
+          WHEN t.status = 'in_progress' THEN 'in_progress'
+          WHEN t.status = 'pending' THEN 'pending'
+          ELSE 'updated'
+        END as activity_type
+      FROM tasks t
+      LEFT JOIN users u1 ON t.assigned_to = u1.id
+      LEFT JOIN users u2 ON t.created_by = u2.id
+      LEFT JOIN opd o ON t.opd_id = o.id
+      ORDER BY t.updated_at DESC
+      LIMIT 10
+    `)
+    
+    // Format activities for frontend
+    const formattedActivities = activities.map(activity => {
+      let description = ''
+      let icon = 'PencilSquareIcon'
+      
+      switch (activity.activity_type) {
+        case 'completed':
+          description = `Tugas "${activity.nama_pekerjaan}" telah diselesaikan`
+          icon = 'CheckCircleIcon'
+          break
+        case 'in_progress':
+          description = `Tugas "${activity.nama_pekerjaan}" sedang dikerjakan`
+          icon = 'ClockIcon'
+          break
+        case 'pending':
+          description = `Tugas baru "${activity.nama_pekerjaan}" telah dibuat`
+          icon = 'PlusIcon'
+          break
+        default:
+          description = `Progress tugas "${activity.nama_pekerjaan}" diupdate ke ${activity.progress_percentage || 0}%`
+          icon = 'PencilSquareIcon'
+      }
+      
+      return {
+        id: activity.id,
+        description,
+        created_at: activity.created_at,
+        icon
+      }
+    })
+    
+    res.json(formattedActivities)
+  } catch (error) {
+    console.error('Get recent activities error:', error)
     res.status(500).json({ message: 'Server error', error: error.message })
   }
 })
