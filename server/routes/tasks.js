@@ -423,17 +423,17 @@ router.get('/analytics/user/:userId', authenticateToken, async (req, res) => {
         SUM(estimated_hours) as total_estimated_hours,
         SUM(actual_hours) as total_actual_hours
       FROM tasks
-      WHERE tenaga_ahli_id = ?
-    `, [userId])
+      WHERE assigned_to = ? OR tenaga_ahli_id = ?
+    `, [userId, userId])
     
     const [recentTasks] = await db.execute(`
       SELECT t.*, o.nama_opd, o.kode_opd
       FROM tasks t
       LEFT JOIN opd o ON t.opd_id = o.id
-      WHERE t.tenaga_ahli_id = ?
+      WHERE t.assigned_to = ? OR t.tenaga_ahli_id = ?
       ORDER BY t.updated_at DESC
       LIMIT 10
-    `, [userId])
+    `, [userId, userId])
     
     res.json({
       userStats: userStats[0],
