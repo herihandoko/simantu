@@ -1,30 +1,18 @@
--- Fix tasks table relations
-USE simantu_db;
+-- Fix tasks table to add missing foreign key columns
+-- This script adds the missing opd_id and tenaga_ahli_id columns to the tasks table
 
--- Add opd_id column to tasks table
+-- Add missing columns to tasks table
 ALTER TABLE tasks 
-ADD COLUMN opd_id INT,
-ADD FOREIGN KEY (opd_id) REFERENCES opd(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS opd_id INT NULL,
+ADD COLUMN IF NOT EXISTS tenaga_ahli_id INT NULL;
 
--- Update existing tasks to use opd_id instead of nama_opd string
-UPDATE tasks t 
-JOIN opd o ON t.nama_opd = o.nama_opd 
-SET t.opd_id = o.id 
-WHERE t.nama_opd IS NOT NULL;
+-- Add foreign key constraints (optional, for data integrity)
+-- ALTER TABLE tasks 
+-- ADD CONSTRAINT fk_tasks_opd FOREIGN KEY (opd_id) REFERENCES opd(id) ON DELETE SET NULL,
+-- ADD CONSTRAINT fk_tasks_tenaga_ahli FOREIGN KEY (tenaga_ahli_id) REFERENCES users(id) ON DELETE SET NULL;
 
--- Add user_id column for tenaga ahli (assuming we'll use users table)
-ALTER TABLE tasks 
-ADD COLUMN tenaga_ahli_id INT,
-ADD FOREIGN KEY (tenaga_ahli_id) REFERENCES users(id) ON DELETE SET NULL;
+-- Update existing tasks to have proper relationships if needed
+-- This is optional and can be customized based on your data
 
--- Create a role for tenaga ahli if it doesn't exist
-INSERT IGNORE INTO roles (name, description, permissions) VALUES
-('Tenaga Ahli', 'Tenaga Ahli role for expert users', '["tasks.read"]');
-
--- Add some sample tenaga ahli users
-INSERT IGNORE INTO users (name, email, password, role_id) VALUES
-('Dr. Ahmad Wijaya', 'ahmad.wijaya@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8K5K5K.', 5),
-('Ir. Siti Nurhaliza', 'siti.nurhaliza@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8K5K5K.', 5),
-('Budi Santoso, S.Kom', 'budi.santoso@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8K5K5K.', 5),
-('Dr. Maria Magdalena', 'maria.magdalena@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8K5K5K.', 5),
-('Ir. John Doe', 'john.doe@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/8K5K5K.', 5);
+-- Verify the changes
+SELECT 'Tasks table structure updated successfully' as status;

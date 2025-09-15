@@ -191,7 +191,10 @@
             
             <!-- Nama OPD -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Nama OPD</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Nama OPD 
+                <span class="text-red-500">*</span>
+              </label>
               <SearchableSelect
                 v-model="form.opd_id"
                 :options="opdList.map(opd => ({ value: opd.id, text: `${opd.kode_opd} - ${opd.nama_opd}` }))"
@@ -202,9 +205,13 @@
             
             <!-- Nama Pekerjaan -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pekerjaan *</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Nama Pekerjaan 
+                <span class="text-red-500">*</span>
+              </label>
               <input v-model="form.nama_pekerjaan" type="text" required
-                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="Masukkan nama pekerjaan">
             </div>
             
             <!-- Status -->
@@ -251,7 +258,7 @@
               <SearchableSelect
                 v-model="form.tenaga_ahli_id"
                 :options="tenagaAhliList.map(ahli => ({ value: ahli.id, text: `${ahli.name} - ${ahli.email}` }))"
-                placeholder="Pilih Tenaga Ahli..."
+                :placeholder="authStore.user && authStore.user.role && authStore.user.role.toLowerCase() === 'tenaga ahli' ? 'Otomatis terpilih (Anda)' : 'Pilih Tenaga Ahli...'"
                 id="tenagaAhliSelect"
               />
             </div>
@@ -369,6 +376,7 @@
 <script>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
 import {
   PlusIcon,
   PencilSquareIcon,
@@ -383,6 +391,7 @@ export default {
     SearchableSelect
   },
   setup() {
+    const authStore = useAuthStore()
     const tasks = ref([])
     const users = ref([])
     const opdList = ref([])
@@ -393,6 +402,20 @@ export default {
     const editingTask = ref(null)
     const newTag = ref('')
 
+    // Helper function to get today's date in YYYY-MM-DD format
+    const getTodayDate = () => {
+      const today = new Date()
+      return today.toISOString().split('T')[0]
+    }
+
+    // Helper function to get default tenaga ahli ID
+    const getDefaultTenagaAhliId = () => {
+      if (authStore.user && authStore.user.role && authStore.user.role.toLowerCase() === 'tenaga ahli') {
+        return authStore.user.id
+      }
+      return ''
+    }
+
     const form = ref({
       nama_pekerjaan: '',
       status: 'pending',
@@ -400,13 +423,13 @@ export default {
       uraian_tugas: '',
       prioritas: 'medium',
       opd_id: '',
-      tenaga_ahli_id: '',
+      tenaga_ahli_id: getDefaultTenagaAhliId(),
       tanggal_selesai: '',
       estimasi_durasi: '',
       progress_percentage: 0,
       tags: [],
       estimated_hours: '',
-      start_date: '',
+      start_date: getTodayDate(),
       milestone: '',
       risk_level: 'low',
       complexity: 'moderate'
@@ -620,13 +643,13 @@ export default {
         uraian_tugas: '',
         prioritas: 'medium',
         opd_id: '',
-        tenaga_ahli_id: '',
+        tenaga_ahli_id: getDefaultTenagaAhliId(),
         tanggal_selesai: '',
         estimasi_durasi: '',
         progress_percentage: 0,
         tags: [],
         estimated_hours: '',
-        start_date: '',
+        start_date: getTodayDate(),
         milestone: '',
         risk_level: 'low',
         complexity: 'moderate'
@@ -676,6 +699,7 @@ export default {
     })
 
     return {
+      authStore,
       tasks,
       filteredTasks,
       users,
