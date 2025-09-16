@@ -88,6 +88,7 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioritas</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OPD</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenaga Ahli</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sub Tasks</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Selesai</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -95,7 +96,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-if="filteredTasks.length === 0">
-              <td colspan="10" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="11" class="px-6 py-12 text-center text-gray-500">
                 <div class="flex flex-col items-center">
                   <svg class="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -140,6 +141,12 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ task.tenaga_ahli_nama || '-' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                      :class="getSubTaskCountClass(task.sub_tasks_count)">
+                  {{ task.sub_tasks_count || 0 }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ task.estimasi_durasi ? `${task.estimasi_durasi} hari` : '-' }}
@@ -354,6 +361,73 @@
                 </button>
               </div>
             </div>
+            
+            <!-- TA-Specific Fields (only show for Tenaga Ahli role) -->
+            <template v-if="authStore.user && authStore.user.role && authStore.user.role.toLowerCase() === 'tenaga ahli'">
+              <!-- Sub Tasks -->
+              <div class="lg:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sub Tasks (Breakdown Pekerjaan)</label>
+                <div class="space-y-2">
+                  <div v-for="(subTask, index) in form.sub_tasks" :key="index" 
+                       class="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                    <input v-model="subTask.title" type="text" placeholder="Judul sub task..."
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <select v-model="subTask.status" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                      <option value="pending">Pending</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                    <button type="button" @click="removeSubTask(index)" 
+                            class="px-2 py-1 text-red-600 hover:text-red-800">
+                      <component :is="TrashIcon" class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <button type="button" @click="addSubTask"
+                          class="w-full px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-md border border-dashed border-primary-300">
+                    + Tambah Sub Task
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Narasi Pekerjaan -->
+              <div class="lg:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Narasi Pekerjaan</label>
+                <textarea v-model="form.narasi_pekerjaan" rows="4" placeholder="Jelaskan pekerjaan yang telah dilakukan..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+              </div>
+              
+              <!-- Evidence Upload -->
+              <div class="lg:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Evidence (Upload File)</label>
+                <div class="space-y-2">
+                  <div v-for="(file, index) in form.evidence_files" :key="index" 
+                       class="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                    <span class="text-sm text-gray-700">{{ file.name }}</span>
+                    <button type="button" @click="removeEvidenceFile(index)" 
+                            class="text-red-600 hover:text-red-800">
+                      <component :is="TrashIcon" class="w-4 h-4" />
+                    </button>
+                  </div>
+                  <input type="file" @change="handleEvidenceUpload" multiple
+                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                  <p class="text-xs text-gray-500">Upload file evidence pekerjaan (PDF, DOC, JPG, PNG)</p>
+                </div>
+              </div>
+              
+              <!-- Link URL -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Link URL</label>
+                <input v-model="form.link_url" type="url" placeholder="https://example.com"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              </div>
+              
+              <!-- Status Update -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
+                <textarea v-model="form.status_update" rows="3" placeholder="Update status pekerjaan..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+              </div>
+            </template>
             </div>
             
             <div class="flex justify-end space-x-3 pt-4">
@@ -433,7 +507,13 @@ export default {
       start_date: getTodayDate(),
       milestone: '',
       risk_level: 'low',
-      complexity: 'moderate'
+      complexity: 'moderate',
+      // New TA fields
+      sub_tasks: [],
+      narasi_pekerjaan: '',
+      evidence_files: [],
+      link_url: '',
+      status_update: ''
     })
 
     // Filters
@@ -494,6 +574,18 @@ export default {
         urgent: 'bg-red-100 text-red-800'
       }
       return classes[priority] || 'bg-gray-100 text-gray-800'
+    }
+
+    const getSubTaskCountClass = (count) => {
+      if (!count || count === 0) {
+        return 'bg-gray-100 text-gray-600'
+      } else if (count <= 2) {
+        return 'bg-green-100 text-green-800'
+      } else if (count <= 5) {
+        return 'bg-yellow-100 text-yellow-800'
+      } else {
+        return 'bg-red-100 text-red-800'
+      }
     }
 
     const formatDate = (dateString) => {
@@ -575,7 +667,13 @@ export default {
           start_date: form.value.start_date || null,
           milestone: form.value.milestone || null,
           risk_level: form.value.risk_level || 'low',
-          complexity: form.value.complexity || 'moderate'
+          complexity: form.value.complexity || 'moderate',
+          // New TA fields
+          sub_tasks: form.value.sub_tasks,
+          narasi_pekerjaan: form.value.narasi_pekerjaan || null,
+          evidence_files: form.value.evidence_files,
+          link_url: form.value.link_url || null,
+          status_update: form.value.status_update || null
         }
 
         if (showEditModal.value) {
@@ -623,7 +721,13 @@ export default {
         start_date: task.start_date || '',
         milestone: task.milestone || '',
         risk_level: task.risk_level || 'low',
-        complexity: task.complexity || 'moderate'
+        complexity: task.complexity || 'moderate',
+        // New TA fields
+        sub_tasks: task.sub_tasks ? (typeof task.sub_tasks === 'string' ? JSON.parse(task.sub_tasks) : task.sub_tasks) : [],
+        narasi_pekerjaan: task.narasi_pekerjaan || '',
+        evidence_files: task.evidence_files ? (typeof task.evidence_files === 'string' ? JSON.parse(task.evidence_files) : task.evidence_files) : [],
+        link_url: task.link_url || '',
+        status_update: task.status_update || ''
       }
       showEditModal.value = true
     }
@@ -696,7 +800,13 @@ export default {
         start_date: getTodayDate(),
         milestone: '',
         risk_level: 'low',
-        complexity: 'moderate'
+        complexity: 'moderate',
+        // New TA fields
+        sub_tasks: [],
+        narasi_pekerjaan: '',
+        evidence_files: [],
+        link_url: '',
+        status_update: ''
       }
     }
 
@@ -709,6 +819,47 @@ export default {
 
     const removeTag = (index) => {
       form.value.tags.splice(index, 1)
+    }
+
+    // Sub task management functions
+    const addSubTask = () => {
+      form.value.sub_tasks.push({
+        title: '',
+        status: 'pending'
+      })
+    }
+
+    const removeSubTask = (index) => {
+      form.value.sub_tasks.splice(index, 1)
+    }
+
+    // Evidence file management functions
+    const handleEvidenceUpload = (event) => {
+      const files = Array.from(event.target.files)
+      files.forEach(file => {
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png']
+        if (allowedTypes.includes(file.type)) {
+          form.value.evidence_files.push({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            file: file
+          })
+        } else {
+          Swal.fire({
+            title: 'File tidak didukung',
+            text: 'Hanya file PDF, DOC, DOCX, JPG, dan PNG yang diperbolehkan.',
+            icon: 'warning'
+          })
+        }
+      })
+      // Clear the input
+      event.target.value = ''
+    }
+
+    const removeEvidenceFile = (index) => {
+      form.value.evidence_files.splice(index, 1)
     }
 
     const exportTasks = async () => {
@@ -757,6 +908,7 @@ export default {
       filters,
       getStatusClass,
       getPriorityClass,
+      getSubTaskCountClass,
       formatDate,
       formatDateTime,
       handleSubmit,
@@ -768,6 +920,10 @@ export default {
       addTag,
       removeTag,
       newTag,
+      addSubTask,
+      removeSubTask,
+      handleEvidenceUpload,
+      removeEvidenceFile,
       exportTasks,
       PlusIcon,
       PencilSquareIcon,

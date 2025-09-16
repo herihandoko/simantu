@@ -267,7 +267,7 @@ export default {
 
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get('/api/users/me')
+        const response = await axios.get('/api/auth/me')
         userInfo.value = response.data
       } catch (error) {
         console.error('Error fetching user info:', error)

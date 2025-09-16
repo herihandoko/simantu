@@ -48,7 +48,11 @@ router.get('/', authenticateToken, async (req, res) => {
              o.nama_opd,
              o.kode_opd,
              u3.name as tenaga_ahli_nama,
-             u3.email as tenaga_ahli_email
+             u3.email as tenaga_ahli_email,
+             CASE 
+               WHEN t.sub_tasks IS NULL OR t.sub_tasks = '[]' THEN 0
+               ELSE JSON_LENGTH(t.sub_tasks)
+             END as sub_tasks_count
       FROM tasks t 
       LEFT JOIN users u1 ON t.assigned_to = u1.id 
       LEFT JOIN users u2 ON t.created_by = u2.id
@@ -74,7 +78,11 @@ router.get('/user/:userId', authenticateToken, async (req, res) => {
              o.nama_opd,
              o.kode_opd,
              u3.name as tenaga_ahli_nama,
-             u3.email as tenaga_ahli_email
+             u3.email as tenaga_ahli_email,
+             CASE 
+               WHEN t.sub_tasks IS NULL OR t.sub_tasks = '[]' THEN 0
+               ELSE JSON_LENGTH(t.sub_tasks)
+             END as sub_tasks_count
       FROM tasks t 
       LEFT JOIN users u1 ON t.assigned_to = u1.id 
       LEFT JOIN users u2 ON t.created_by = u2.id
@@ -133,7 +141,13 @@ router.post('/', authenticateToken, async (req, res) => {
       start_date,
       milestone,
       risk_level,
-      complexity
+      complexity,
+      // New TA fields
+      sub_tasks,
+      narasi_pekerjaan,
+      evidence_files,
+      link_url,
+      status_update
     } = req.body
     
     if (!nama_pekerjaan) {
@@ -149,14 +163,16 @@ router.post('/', authenticateToken, async (req, res) => {
         task_id, title, nama_pekerjaan, status, tugas, uraian_tugas, 
         priority, opd_id, tenaga_ahli_id, tanggal_selesai, created_by,
         estimasi_durasi, progress_percentage, tags, estimated_hours,
-        start_date, milestone, risk_level, complexity
+        start_date, milestone, risk_level, complexity,
+        sub_tasks, narasi_pekerjaan, evidence_files, link_url, status_update
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       taskId, nama_pekerjaan, nama_pekerjaan, status || 'pending', tugas, uraian_tugas,
       prioritas || 'medium', opd_id, tenaga_ahli_id, formatDateForMySQL(tanggal_selesai), req.user.id,
       estimasi_durasi, progress_percentage || 0, JSON.stringify(tags), estimated_hours,
-      formatDateForMySQL(start_date), milestone, risk_level || 'low', complexity || 'moderate'
+      formatDateForMySQL(start_date), milestone, risk_level || 'low', complexity || 'moderate',
+      JSON.stringify(sub_tasks), narasi_pekerjaan, JSON.stringify(evidence_files), link_url, status_update
     ])
     
     const [newTask] = await db.execute(`
@@ -201,7 +217,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
       start_date,
       milestone,
       risk_level,
-      complexity
+      complexity,
+      // New TA fields
+      sub_tasks,
+      narasi_pekerjaan,
+      evidence_files,
+      link_url,
+      status_update
     } = req.body
     
     if (!nama_pekerjaan) {
@@ -214,11 +236,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
           priority = ?, opd_id = ?, tenaga_ahli_id = ?, tanggal_selesai = ?, 
           estimasi_durasi = ?, progress_percentage = ?, tags = ?, estimated_hours = ?,
           start_date = ?, milestone = ?, risk_level = ?, complexity = ?,
+          sub_tasks = ?, narasi_pekerjaan = ?, evidence_files = ?, link_url = ?, status_update = ?,
+          status_updated_at = CURRENT_TIMESTAMP, status_updated_by = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [nama_pekerjaan, status, tugas, uraian_tugas, prioritas, opd_id, tenaga_ahli_id, formatDateForMySQL(tanggal_selesai),
         estimasi_durasi, progress_percentage, JSON.stringify(tags), estimated_hours,
-        formatDateForMySQL(start_date), milestone, risk_level, complexity, req.params.id])
+        formatDateForMySQL(start_date), milestone, risk_level, complexity,
+        JSON.stringify(sub_tasks), narasi_pekerjaan, JSON.stringify(evidence_files), link_url, status_update, req.user.id,
+        req.params.id])
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Task not found' })
@@ -705,6 +731,173 @@ router.get('/metrics/performance', authenticateToken, async (req, res) => {
     })
   } catch (error) {
     console.error('Get performance metrics error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// ===== NEW TA-SPECIFIC ENDPOINTS =====
+
+// Get sub tasks for a task
+router.get('/:id/sub-tasks', authenticateToken, async (req, res) => {
+  try {
+    const [subTasks] = await db.execute(`
+      SELECT tst.*, u.name as created_by_name
+      FROM task_sub_tasks tst
+      LEFT JOIN users u ON tst.created_by = u.id
+      WHERE tst.task_id = ?
+      ORDER BY tst.created_at DESC
+    `, [req.params.id])
+    
+    res.json(subTasks)
+  } catch (error) {
+    console.error('Get sub tasks error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Create sub task
+router.post('/:id/sub-tasks', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, status, priority } = req.body
+    
+    if (!title) {
+      return res.status(400).json({ message: 'Title is required' })
+    }
+    
+    const [result] = await db.execute(`
+      INSERT INTO task_sub_tasks (task_id, title, description, status, priority, created_by)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [req.params.id, title, description, status || 'pending', priority || 'medium', req.user.id])
+    
+    const [newSubTask] = await db.execute(`
+      SELECT tst.*, u.name as created_by_name
+      FROM task_sub_tasks tst
+      LEFT JOIN users u ON tst.created_by = u.id
+      WHERE tst.id = ?
+    `, [result.insertId])
+    
+    res.json(newSubTask[0])
+  } catch (error) {
+    console.error('Create sub task error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Update sub task
+router.put('/sub-tasks/:subTaskId', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, status, priority } = req.body
+    
+    const [result] = await db.execute(`
+      UPDATE task_sub_tasks 
+      SET title = ?, description = ?, status = ?, priority = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [title, description, status, priority, req.params.subTaskId])
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Sub task not found' })
+    }
+    
+    const [updatedSubTask] = await db.execute(`
+      SELECT tst.*, u.name as created_by_name
+      FROM task_sub_tasks tst
+      LEFT JOIN users u ON tst.created_by = u.id
+      WHERE tst.id = ?
+    `, [req.params.subTaskId])
+    
+    res.json(updatedSubTask[0])
+  } catch (error) {
+    console.error('Update sub task error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Delete sub task
+router.delete('/sub-tasks/:subTaskId', authenticateToken, async (req, res) => {
+  try {
+    const [result] = await db.execute('DELETE FROM task_sub_tasks WHERE id = ?', [req.params.subTaskId])
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Sub task not found' })
+    }
+    
+    res.json({ message: 'Sub task deleted successfully' })
+  } catch (error) {
+    console.error('Delete sub task error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Get evidence files for a task
+router.get('/:id/evidence', authenticateToken, async (req, res) => {
+  try {
+    const [evidence] = await db.execute(`
+      SELECT te.*, u.name as uploaded_by_name
+      FROM task_evidence te
+      LEFT JOIN users u ON te.uploaded_by = u.id
+      WHERE te.task_id = ?
+      ORDER BY te.created_at DESC
+    `, [req.params.id])
+    
+    res.json(evidence)
+  } catch (error) {
+    console.error('Get evidence error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Get status updates history for a task
+router.get('/:id/status-updates', authenticateToken, async (req, res) => {
+  try {
+    const [statusUpdates] = await db.execute(`
+      SELECT tsu.*, u.name as updated_by_name
+      FROM task_status_updates tsu
+      LEFT JOIN users u ON tsu.updated_by = u.id
+      WHERE tsu.task_id = ?
+      ORDER BY tsu.created_at DESC
+    `, [req.params.id])
+    
+    res.json(statusUpdates)
+  } catch (error) {
+    console.error('Get status updates error:', error)
+    res.status(500).json({ message: 'Server error', error: error.message })
+  }
+})
+
+// Update task status with history tracking
+router.post('/:id/status-update', authenticateToken, async (req, res) => {
+  try {
+    const { new_status, update_message } = req.body
+    
+    if (!new_status) {
+      return res.status(400).json({ message: 'New status is required' })
+    }
+    
+    // Get current status
+    const [currentTask] = await db.execute('SELECT status FROM tasks WHERE id = ?', [req.params.id])
+    
+    if (currentTask.length === 0) {
+      return res.status(404).json({ message: 'Task not found' })
+    }
+    
+    const oldStatus = currentTask[0].status
+    
+    // Update task status
+    await db.execute(`
+      UPDATE tasks 
+      SET status = ?, status_update = ?, status_updated_at = CURRENT_TIMESTAMP, status_updated_by = ?
+      WHERE id = ?
+    `, [new_status, update_message, req.user.id, req.params.id])
+    
+    // Record status update history
+    await db.execute(`
+      INSERT INTO task_status_updates (task_id, old_status, new_status, update_message, updated_by)
+      VALUES (?, ?, ?, ?, ?)
+    `, [req.params.id, oldStatus, new_status, update_message, req.user.id])
+    
+    res.json({ message: 'Status updated successfully' })
+  } catch (error) {
+    console.error('Update status error:', error)
     res.status(500).json({ message: 'Server error', error: error.message })
   }
 })

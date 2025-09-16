@@ -161,32 +161,60 @@ export default {
     const isCollapsed = ref(false)
 
     const menuItems = computed(() => {
+      const roleName = authStore.user?.role ? authStore.user.role.toLowerCase() : ''
+      
       const allMenuItems = [
-        { name: 'Dashboard', path: '/', icon: HomeIcon, permission: 'dashboard.read' },
+        { name: 'Dashboard', path: '/', icon: HomeIcon, permission: 'dashboard.read', hideForTenagaAhli: true },
+        { name: 'Analytics', path: '/analytics', icon: ChartBarIcon, permission: 'analytics.read' },
+        { name: 'My Dashboard', path: '/expert-dashboard', icon: UserIcon, permission: 'dashboard.read' },
         { name: 'Users', path: '/users', icon: UsersIcon, permission: 'users.read' },
         { name: 'Roles', path: '/roles', icon: ShieldCheckIcon, permission: 'roles.read' },
         { name: 'Configs', path: '/configs', icon: CogIcon, permission: 'configs.read' },
         { name: 'Tasks', path: '/tasks', icon: ClipboardDocumentListIcon, permission: 'tasks.read' },
-        { name: 'Master OPD', path: '/opd', icon: BuildingOfficeIcon, permission: 'opd.read' },
-        { name: 'Analytics', path: '/analytics', icon: ChartBarIcon, permission: 'analytics.read' },
-        { name: 'My Dashboard', path: '/expert-dashboard', icon: UserIcon, permission: 'dashboard.read' }
+        { name: 'Master OPD', path: '/opd', icon: BuildingOfficeIcon, permission: 'opd.read' }
       ]
       
-      // Filter menu items based on user permissions
+      // Filter menu items based on user permissions and role
       return allMenuItems.filter(item => {
         if (!authStore.user || !authStore.user.permissions) return false
+        
+        // Hide Dashboard menu for Tenaga Ahli role
+        if (roleName === 'tenaga ahli' && item.hideForTenagaAhli) {
+          return false
+        }
+        
         return authStore.user.permissions.includes(item.permission)
       })
     })
 
     const currentPageTitle = computed(() => {
       const currentItem = menuItems.value?.find(item => item.path === route.path)
-      return currentItem ? currentItem.name : 'Dashboard'
+      if (currentItem) {
+        return currentItem.name
+      }
+      
+      // Special handling for Tenaga Ahli accessing expert-dashboard
+      const roleName = authStore.user?.role ? authStore.user.role.toLowerCase() : ''
+      if (roleName === 'tenaga ahli' && route.path === '/expert-dashboard') {
+        return 'My Dashboard'
+      }
+      
+      return 'Dashboard'
     })
 
     const currentPageIcon = computed(() => {
       const currentItem = menuItems.value?.find(item => item.path === route.path)
-      return currentItem ? currentItem.icon : HomeIcon
+      if (currentItem) {
+        return currentItem.icon
+      }
+      
+      // Special handling for Tenaga Ahli accessing expert-dashboard
+      const roleName = authStore.user?.role ? authStore.user.role.toLowerCase() : ''
+      if (roleName === 'tenaga ahli' && route.path === '/expert-dashboard') {
+        return UserIcon
+      }
+      
+      return HomeIcon
     })
 
     const toggleSidebar = () => {

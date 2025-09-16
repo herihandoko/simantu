@@ -30,6 +30,18 @@ const routes = [
         meta: { permission: 'dashboard.read' }
       },
       {
+        path: '/analytics',
+        name: 'AnalyticsDashboard',
+        component: () => import('../views/AnalyticsDashboard.vue'),
+        meta: { permission: 'analytics.read' }
+      },
+      {
+        path: '/expert-dashboard',
+        name: 'ExpertDashboard',
+        component: () => import('../views/ExpertDashboard.vue'),
+        meta: { permission: 'dashboard.read' }
+      },
+      {
         path: '/users',
         name: 'Users',
         component: () => import('../views/Users.vue'),
@@ -58,18 +70,6 @@ const routes = [
         name: 'OPD',
         component: () => import('../views/OPD.vue'),
         meta: { permission: 'opd.read' }
-      },
-      {
-        path: '/analytics',
-        name: 'AnalyticsDashboard',
-        component: () => import('../views/AnalyticsDashboard.vue'),
-        meta: { permission: 'analytics.read' }
-      },
-      {
-        path: '/expert-dashboard',
-        name: 'ExpertDashboard',
-        component: () => import('../views/ExpertDashboard.vue'),
-        meta: { permission: 'dashboard.read' }
       }
     ]
   }
@@ -99,13 +99,22 @@ router.beforeEach(async (to, from, next) => {
     const firstAvailablePath = getFirstAvailablePath(authStore.user)
     next(firstAvailablePath)
   } else if (to.path === '/' && authStore.isAuthenticated) {
-    // If accessing root path and authenticated, check if user has permission for dashboard
-    if (authStore.user && authStore.user.permissions && authStore.user.permissions.includes('dashboard.read')) {
-      next() // Allow access to dashboard
+    // If accessing root path and authenticated, check user role
+    if (authStore.user) {
+      const roleName = authStore.user.role ? authStore.user.role.toLowerCase() : ''
+      
+      // For Tenaga Ahli, redirect to expert-dashboard
+      if (roleName === 'tenaga ahli' && authStore.user.permissions && authStore.user.permissions.includes('dashboard.read')) {
+        next('/expert-dashboard')
+      } else if (authStore.user.permissions && authStore.user.permissions.includes('dashboard.read')) {
+        next() // Allow access to dashboard for other roles
+      } else {
+        // Redirect to first available page if no dashboard permission
+        const firstAvailablePath = getFirstAvailablePath(authStore.user)
+        next(firstAvailablePath)
+      }
     } else {
-      // Redirect to first available page if no dashboard permission
-      const firstAvailablePath = getFirstAvailablePath(authStore.user)
-      next(firstAvailablePath)
+      next()
     }
   } else if (to.meta.permission && authStore.isAuthenticated) {
     // Check if user has permission to access this route
@@ -130,7 +139,7 @@ function getFirstAvailablePath(user) {
   // Role-based redirect logic (same as Login.vue)
   const roleName = user.role ? user.role.toLowerCase() : ''
   
-  // 1. Tenaga Ahli → expert-dashboard
+  // 1. Tenaga Ahli → expert-dashboard (redirect dashboard to expert-dashboard)
   if (roleName === 'tenaga ahli') {
     if (user.permissions.includes('dashboard.read')) {
       return '/expert-dashboard'
@@ -147,13 +156,13 @@ function getFirstAvailablePath(user) {
   // 3. Default fallback: Get first available path based on permissions
   const availableRoutes = [
     { path: '/', permission: 'dashboard.read' },
+    { path: '/analytics', permission: 'analytics.read' },
+    { path: '/expert-dashboard', permission: 'dashboard.read' },
     { path: '/users', permission: 'users.read' },
     { path: '/roles', permission: 'roles.read' },
     { path: '/configs', permission: 'configs.read' },
     { path: '/tasks', permission: 'tasks.read' },
-    { path: '/opd', permission: 'opd.read' },
-    { path: '/analytics', permission: 'analytics.read' },
-    { path: '/expert-dashboard', permission: 'dashboard.read' }
+    { path: '/opd', permission: 'opd.read' }
   ]
   
   // Find first route user has permission for
