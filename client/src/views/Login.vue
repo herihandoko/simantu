@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center relative overflow-hidden">
+  <div class="h-screen flex items-center justify-center relative overflow-hidden login-page">
     <!-- Animated Background -->
-    <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800" style="min-height: 100vh;">
       <div class="absolute inset-0 bg-black/20"></div>
       <!-- Floating Elements -->
       <div class="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full blur-xl animate-pulse"></div>
