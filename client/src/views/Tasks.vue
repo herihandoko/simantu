@@ -362,72 +362,132 @@
               </div>
             </div>
             
-            <!-- TA-Specific Fields (only show for Tenaga Ahli role) -->
-            <template v-if="authStore.user && authStore.user.role && authStore.user.role.toLowerCase() === 'tenaga ahli'">
-              <!-- Sub Tasks -->
-              <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Sub Tasks (Breakdown Pekerjaan)</label>
-                <div class="space-y-2">
-                  <div v-for="(subTask, index) in form.sub_tasks" :key="index" 
-                       class="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
-                    <input v-model="subTask.title" type="text" placeholder="Judul sub task..."
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <select v-model="subTask.status" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
-                      <option value="pending">Pending</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                    <button type="button" @click="removeSubTask(index)" 
-                            class="px-2 py-1 text-red-600 hover:text-red-800">
-                      <component :is="TrashIcon" class="w-4 h-4" />
-                    </button>
-                  </div>
-                  <button type="button" @click="addSubTask"
-                          class="w-full px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-md border border-dashed border-primary-300">
-                    + Tambah Sub Task
+            <!-- Additional Task Fields (available for all roles) -->
+            <!-- Sub Tasks -->
+            <div class="lg:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Sub Tasks (Breakdown Pekerjaan)</label>
+              <div class="space-y-2">
+                <div v-for="(subTask, index) in form.sub_tasks" :key="index" 
+                     class="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                  <input v-model="subTask.title" type="text" placeholder="Judul sub task..."
+                         class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                  <select v-model="subTask.status" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <button type="button" @click="removeSubTask(index)" 
+                          class="px-2 py-1 text-red-600 hover:text-red-800">
+                    <component :is="TrashIcon" class="w-4 h-4" />
                   </button>
                 </div>
+                <button type="button" @click="addSubTask"
+                        class="w-full px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-md border border-dashed border-primary-300">
+                  + Tambah Sub Task
+                </button>
               </div>
-              
-              <!-- Narasi Pekerjaan -->
-              <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Narasi Pekerjaan</label>
-                <textarea v-model="form.narasi_pekerjaan" rows="4" placeholder="Jelaskan pekerjaan yang telah dilakukan..."
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
-              </div>
-              
-              <!-- Evidence Upload -->
-              <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Evidence (Upload File)</label>
-                <div class="space-y-2">
-                  <div v-for="(file, index) in form.evidence_files" :key="index" 
-                       class="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                    <span class="text-sm text-gray-700">{{ file.name }}</span>
+            </div>
+            
+            <!-- Narasi Pekerjaan -->
+            <div class="lg:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Narasi Pekerjaan</label>
+              <textarea v-model="form.narasi_pekerjaan" rows="4" placeholder="Jelaskan pekerjaan yang telah dilakukan..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+            </div>
+            
+            <!-- Evidence Upload -->
+            <div class="lg:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Evidence (Upload File)</label>
+              <div class="space-y-2">
+                <!-- File Preview List -->
+                <div v-for="(file, index) in form.evidence_files" :key="index" 
+                     class="flex items-center justify-between p-3 bg-gray-50 rounded-md border"
+                     :class="file.file ? 'border-green-300 bg-green-50' : 'border-gray-300'">
+                  <div class="flex items-center space-x-3">
+                    <!-- File Icon -->
+                    <div class="flex-shrink-0">
+                      <div v-if="file.type.startsWith('image/')" class="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                      <div v-else-if="file.type === 'application/pdf'" class="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                      <div v-else class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <!-- File Info -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center space-x-2">
+                        <p class="text-sm font-medium text-gray-900 truncate">{{ file.name }}</p>
+                        <span v-if="file.file" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Baru
+                        </span>
+                        <span v-else class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                          Tersimpan
+                        </span>
+                      </div>
+                      <p class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</p>
+                    </div>
+                  </div>
+                  
+                  <!-- Action Buttons -->
+                  <div class="flex items-center space-x-2">
+                    <!-- Preview Button -->
+                    <button type="button" @click="previewFile(file)" 
+                            class="text-blue-600 hover:text-blue-800 p-1 rounded"
+                            title="Preview file">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Download Button -->
+                    <button type="button" @click="downloadFile(file)" 
+                            class="text-green-600 hover:text-green-800 p-1 rounded"
+                            title="Download file">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Remove Button -->
                     <button type="button" @click="removeEvidenceFile(index)" 
-                            class="text-red-600 hover:text-red-800">
+                            class="text-red-600 hover:text-red-800 p-1 rounded"
+                            title="Remove file">
                       <component :is="TrashIcon" class="w-4 h-4" />
                     </button>
                   </div>
-                  <input type="file" @change="handleEvidenceUpload" multiple
-                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <p class="text-xs text-gray-500">Upload file evidence pekerjaan (PDF, DOC, JPG, PNG)</p>
                 </div>
-              </div>
-              
-              <!-- Link URL -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Link URL</label>
-                <input v-model="form.link_url" type="url" placeholder="https://example.com"
+                
+                <!-- Upload Input -->
+                <input type="file" @change="handleEvidenceUpload" multiple
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <p class="text-xs text-gray-500">Upload file evidence pekerjaan (PDF, DOC, JPG, PNG)</p>
               </div>
-              
-              <!-- Status Update -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
-                <textarea v-model="form.status_update" rows="3" placeholder="Update status pekerjaan..."
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
-              </div>
-            </template>
+            </div>
+            
+            <!-- Link URL -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Link URL</label>
+              <input v-model="form.link_url" type="url" placeholder="https://example.com"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <!-- Status Update -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
+              <textarea v-model="form.status_update" rows="3" placeholder="Update status pekerjaan..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+            </div>
             </div>
             
             <div class="flex justify-end space-x-3 pt-4">
@@ -441,6 +501,61 @@
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div v-if="showPreviewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">Preview File</h3>
+          <button @click="closePreviewModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="mb-4">
+          <h4 class="text-sm font-medium text-gray-700">{{ previewFileData.name }}</h4>
+          <p class="text-xs text-gray-500">{{ formatFileSize(previewFileData.size) }}</p>
+        </div>
+        
+        <div class="max-h-96 overflow-auto">
+          <!-- Image Preview -->
+          <div v-if="previewFileData.type.startsWith('image/')" class="text-center">
+            <img :src="previewFileData.url" :alt="previewFileData.name" 
+                 class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg">
+          </div>
+          
+          <!-- PDF Preview -->
+          <div v-else-if="previewFileData.type === 'application/pdf'" class="w-full h-96">
+            <embed :src="previewFileData.url" type="application/pdf" width="100%" height="100%">
+          </div>
+          
+          <!-- Other Files -->
+          <div v-else class="text-center py-8">
+            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p class="text-gray-600 mb-4">File ini tidak dapat di-preview</p>
+            <button @click="downloadFile(previewFileData)" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              Download File
+            </button>
+          </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-4">
+          <button @click="downloadFile(previewFileData)" 
+                  class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+            Download
+          </button>
+          <button @click="closePreviewModal" 
+                  class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+            Tutup
+          </button>
         </div>
       </div>
     </div>
@@ -473,9 +588,11 @@ export default {
     const tenagaAhliList = ref([])
     const showCreateModal = ref(false)
     const showEditModal = ref(false)
+    const showPreviewModal = ref(false)
     const isLoading = ref(false)
     const editingTask = ref(null)
     const newTag = ref('')
+    const previewFileData = ref({})
 
     // Helper function to get today's date in YYYY-MM-DD format
     const getTodayDate = () => {
@@ -862,6 +979,87 @@ export default {
       form.value.evidence_files.splice(index, 1)
     }
 
+    // File utility functions
+    const formatFileSize = (bytes) => {
+      if (bytes === 0) return '0 Bytes'
+      const k = 1024
+      const sizes = ['Bytes', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
+
+    const previewFile = (file) => {
+      // Check if file has a file property (newly uploaded) or is already processed
+      const fileObject = file.file || file
+      
+      if (fileObject instanceof File) {
+        // For newly uploaded files
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          previewFileData.value = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            url: e.target.result,
+            file: fileObject
+          }
+          showPreviewModal.value = true
+        }
+        reader.readAsDataURL(fileObject)
+      } else {
+        // For files from database (already processed)
+        // Show file info without preview
+        Swal.fire({
+          title: 'File Preview',
+          html: `
+            <div class="text-left">
+              <p><strong>Nama File:</strong> ${file.name}</p>
+              <p><strong>Ukuran:</strong> ${formatFileSize(file.size)}</p>
+              <p><strong>Tipe:</strong> ${file.type}</p>
+              <p class="mt-3 text-sm text-gray-600">File ini sudah tersimpan di database. Preview tidak tersedia untuk file yang sudah disimpan.</p>
+            </div>
+          `,
+          showConfirmButton: true,
+          confirmButtonText: 'Download',
+          showCancelButton: true,
+          cancelButtonText: 'Tutup'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            downloadFile(file)
+          }
+        })
+      }
+    }
+
+    const closePreviewModal = () => {
+      showPreviewModal.value = false
+      previewFileData.value = {}
+    }
+
+    const downloadFile = (file) => {
+      const fileObject = file.file || file
+      
+      if (fileObject instanceof File) {
+        // For newly uploaded files
+        const url = URL.createObjectURL(fileObject)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = file.name
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      } else {
+        // For files from database, show message
+        Swal.fire({
+          title: 'Download File',
+          text: 'File ini sudah tersimpan di database. Untuk download, silakan hubungi administrator atau gunakan fitur export.',
+          icon: 'info',
+          confirmButtonText: 'OK'
+        })
+      }
+    }
+
     const exportTasks = async () => {
       try {
         isLoading.value = true
@@ -902,9 +1100,11 @@ export default {
       tenagaAhliList,
       showCreateModal,
       showEditModal,
+      showPreviewModal,
       isLoading,
       editingTask,
       form,
+      previewFileData,
       filters,
       getStatusClass,
       getPriorityClass,
@@ -924,6 +1124,10 @@ export default {
       removeSubTask,
       handleEvidenceUpload,
       removeEvidenceFile,
+      formatFileSize,
+      previewFile,
+      closePreviewModal,
+      downloadFile,
       exportTasks,
       PlusIcon,
       PencilSquareIcon,
