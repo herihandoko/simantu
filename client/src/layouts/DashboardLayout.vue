@@ -144,6 +144,7 @@ import {
   ShieldCheckIcon,
   CogIcon,
   ClipboardDocumentListIcon,
+  Squares2X2Icon,
   BuildingOfficeIcon,
   ChartBarIcon,
   UserIcon,
@@ -171,6 +172,7 @@ export default {
         { name: 'Roles', path: '/roles', icon: ShieldCheckIcon, permission: 'roles.read' },
         { name: 'Configs', path: '/configs', icon: CogIcon, permission: 'configs.read' },
         { name: 'Tasks', path: '/tasks', icon: ClipboardDocumentListIcon, permission: 'tasks.read' },
+        { name: 'Board', path: '/board', icon: Squares2X2Icon, permission: 'tasks.read' },
         { name: 'Master OPD', path: '/opd', icon: BuildingOfficeIcon, permission: 'opd.read' }
       ]
       

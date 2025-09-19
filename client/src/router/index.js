@@ -66,6 +66,12 @@ const routes = [
         meta: { permission: 'tasks.read' }
       },
       {
+        path: '/board',
+        name: 'Board',
+        component: () => import('../views/Board.vue'),
+        meta: { permission: 'tasks.read' }
+      },
+      {
         path: '/opd',
         name: 'OPD',
         component: () => import('../views/OPD.vue'),
