@@ -125,8 +125,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // Create new task
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { 
-      nama_pekerjaan, 
+    const {
+      nama_pekerjaan,
       status, 
       tugas, 
       uraian_tugas, 
@@ -137,7 +137,6 @@ router.post('/', authenticateToken, async (req, res) => {
       estimasi_durasi,
       progress_percentage,
       tags,
-      estimated_hours,
       start_date,
       milestone,
       risk_level,
@@ -162,7 +161,7 @@ router.post('/', authenticateToken, async (req, res) => {
       INSERT INTO tasks (
         task_id, title, nama_pekerjaan, status, tugas, uraian_tugas, 
         priority, opd_id, tenaga_ahli_id, tanggal_selesai, created_by,
-        estimasi_durasi, progress_percentage, tags, estimated_hours,
+        estimasi_durasi, progress_percentage, tags,
         start_date, milestone, risk_level, complexity,
         sub_tasks, narasi_pekerjaan, evidence_files, link_url, status_update
       )
@@ -170,7 +169,7 @@ router.post('/', authenticateToken, async (req, res) => {
     `, [
       taskId, nama_pekerjaan, nama_pekerjaan, status || 'pending', tugas, uraian_tugas,
       prioritas || 'medium', opd_id, tenaga_ahli_id, formatDateForMySQL(tanggal_selesai), req.user.id,
-      estimasi_durasi, progress_percentage || 0, JSON.stringify(tags), estimated_hours,
+      estimasi_durasi, progress_percentage || 0, JSON.stringify(tags),
       formatDateForMySQL(start_date), milestone, risk_level || 'low', complexity || 'moderate',
       JSON.stringify(sub_tasks), narasi_pekerjaan, JSON.stringify(evidence_files), link_url, status_update
     ])
@@ -213,7 +212,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
       estimasi_durasi,
       progress_percentage,
       tags,
-      estimated_hours,
       start_date,
       milestone,
       risk_level,
@@ -234,14 +232,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
       UPDATE tasks 
       SET nama_pekerjaan = ?, status = ?, tugas = ?, uraian_tugas = ?, 
           priority = ?, opd_id = ?, tenaga_ahli_id = ?, tanggal_selesai = ?, 
-          estimasi_durasi = ?, progress_percentage = ?, tags = ?, estimated_hours = ?,
+          estimasi_durasi = ?, progress_percentage = ?, tags = ?,
           start_date = ?, milestone = ?, risk_level = ?, complexity = ?,
           sub_tasks = ?, narasi_pekerjaan = ?, evidence_files = ?, link_url = ?, status_update = ?,
           status_updated_at = CURRENT_TIMESTAMP, status_updated_by = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [nama_pekerjaan, status, tugas, uraian_tugas, prioritas, opd_id, tenaga_ahli_id, formatDateForMySQL(tanggal_selesai),
-        estimasi_durasi, progress_percentage, JSON.stringify(tags), estimated_hours,
+        estimasi_durasi, progress_percentage, JSON.stringify(tags),
         formatDateForMySQL(start_date), milestone, risk_level, complexity,
         JSON.stringify(sub_tasks), narasi_pekerjaan, JSON.stringify(evidence_files), link_url, status_update, req.user.id,
         req.params.id])

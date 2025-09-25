@@ -291,12 +291,6 @@
                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
             </div>
             
-            <!-- Estimasi Jam Kerja -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Estimasi Jam Kerja</label>
-              <input v-model="form.estimated_hours" type="number" step="0.5" min="0"
-                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
-            </div>
             
             <!-- Progress Percentage -->
             <div>
@@ -372,9 +366,10 @@
                   <input v-model="subTask.title" type="text" placeholder="Judul sub task..."
                          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
                   <select v-model="subTask.status" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="pending">Pending</option>
+                    <option value="pending">To Do</option>
                     <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
+                    <option value="completed">Done</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                   <button type="button" @click="removeSubTask(index)" 
                           class="px-2 py-1 text-red-600 hover:text-red-800">
@@ -620,7 +615,6 @@ export default {
       estimasi_durasi: '',
       progress_percentage: 0,
       tags: [],
-      estimated_hours: '',
       start_date: getTodayDate(),
       milestone: '',
       risk_level: 'low',
@@ -780,7 +774,6 @@ export default {
           estimasi_durasi: form.value.estimasi_durasi || null,
           progress_percentage: form.value.progress_percentage || 0,
           tags: form.value.tags,
-          estimated_hours: form.value.estimated_hours || null,
           start_date: form.value.start_date || null,
           milestone: form.value.milestone || null,
           risk_level: form.value.risk_level || 'low',
@@ -834,7 +827,6 @@ export default {
         estimasi_durasi: task.estimasi_durasi || '',
         progress_percentage: task.progress_percentage || 0,
         tags: task.tags ? (typeof task.tags === 'string' ? JSON.parse(task.tags) : task.tags) : [],
-        estimated_hours: task.estimated_hours || '',
         start_date: task.start_date || '',
         milestone: task.milestone || '',
         risk_level: task.risk_level || 'low',
@@ -913,7 +905,6 @@ export default {
         estimasi_durasi: '',
         progress_percentage: 0,
         tags: [],
-        estimated_hours: '',
         start_date: getTodayDate(),
         milestone: '',
         risk_level: 'low',
