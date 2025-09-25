@@ -292,15 +292,6 @@
             </div>
             
             
-            <!-- Progress Percentage -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Progress (%)</label>
-              <div class="flex items-center space-x-2">
-                <input v-model="form.progress_percentage" type="range" min="0" max="100" step="5"
-                       class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                <span class="text-sm font-medium text-gray-700 w-12">{{ form.progress_percentage }}%</span>
-              </div>
-            </div>
             
             <!-- Milestone -->
             <div>
@@ -613,7 +604,6 @@ export default {
       tenaga_ahli_id: getDefaultTenagaAhliId(),
       tanggal_selesai: '',
       estimasi_durasi: '',
-      progress_percentage: 0,
       tags: [],
       start_date: getTodayDate(),
       milestone: '',
@@ -772,7 +762,6 @@ export default {
           tenaga_ahli_id: form.value.tenaga_ahli_id || null,
           tanggal_selesai: form.value.tanggal_selesai || null,
           estimasi_durasi: form.value.estimasi_durasi || null,
-          progress_percentage: form.value.progress_percentage || 0,
           tags: form.value.tags,
           start_date: form.value.start_date || null,
           milestone: form.value.milestone || null,
@@ -825,7 +814,6 @@ export default {
         tenaga_ahli_id: task.tenaga_ahli_id || '',
         tanggal_selesai: task.tanggal_selesai || '',
         estimasi_durasi: task.estimasi_durasi || '',
-        progress_percentage: task.progress_percentage || 0,
         tags: task.tags ? (typeof task.tags === 'string' ? JSON.parse(task.tags) : task.tags) : [],
         start_date: task.start_date || '',
         milestone: task.milestone || '',
@@ -903,7 +891,6 @@ export default {
         tenaga_ahli_id: getDefaultTenagaAhliId(),
         tanggal_selesai: '',
         estimasi_durasi: '',
-        progress_percentage: 0,
         tags: [],
         start_date: getTodayDate(),
         milestone: '',

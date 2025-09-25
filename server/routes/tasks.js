@@ -135,7 +135,6 @@ router.post('/', authenticateToken, async (req, res) => {
       tenaga_ahli_id, 
       tanggal_selesai,
       estimasi_durasi,
-      progress_percentage,
       tags,
       start_date,
       milestone,
@@ -153,6 +152,39 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Nama Pekerjaan is required' })
     }
     
+    // Calculate progress based on sub tasks (always auto-calculate)
+    let calculatedProgress = 0
+    let calculatedStatus = status || 'pending'
+    
+    if (sub_tasks && Array.isArray(sub_tasks) && sub_tasks.length > 0) {
+      const totalSubTasks = sub_tasks.length
+      const completedSubTasks = sub_tasks.filter(st => st.status === 'completed').length
+      const inProgressSubTasks = sub_tasks.filter(st => st.status === 'in_progress').length
+      const pendingSubTasks = sub_tasks.filter(st => st.status === 'pending').length
+      
+      if (totalSubTasks === 1) {
+        // Jika ada 1 sub task dan complete maka progress 100%
+        if (completedSubTasks === 1) {
+          calculatedProgress = 100
+          calculatedStatus = 'completed'
+        } else {
+          calculatedProgress = 0
+        }
+      } else {
+        // Jika ada lebih dari 1 sub task maka progress = completed / total * 100
+        calculatedProgress = Math.round((completedSubTasks / totalSubTasks) * 100)
+        
+        // Set status based on sub tasks
+        if (completedSubTasks === totalSubTasks) {
+          calculatedStatus = 'completed'
+        } else if (inProgressSubTasks > 0 || completedSubTasks > 0) {
+          calculatedStatus = 'in_progress'
+        } else {
+          calculatedStatus = 'pending'
+        }
+      }
+    }
+    
     // Generate task_id with auto-increment
     const [countResult] = await db.execute('SELECT COUNT(*) as count FROM tasks')
     const taskId = `TASK-${String(countResult[0].count + 1).padStart(4, '0')}`
@@ -167,11 +199,11 @@ router.post('/', authenticateToken, async (req, res) => {
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      taskId, nama_pekerjaan, nama_pekerjaan, status || 'pending', tugas, uraian_tugas,
-      prioritas || 'medium', opd_id, tenaga_ahli_id, formatDateForMySQL(tanggal_selesai), req.user.id,
-      estimasi_durasi, progress_percentage || 0, JSON.stringify(tags),
-      formatDateForMySQL(start_date), milestone, risk_level || 'low', complexity || 'moderate',
-      JSON.stringify(sub_tasks), narasi_pekerjaan, JSON.stringify(evidence_files), link_url, status_update
+      taskId, nama_pekerjaan, nama_pekerjaan, calculatedStatus, tugas || null, uraian_tugas || null,
+      prioritas || 'medium', opd_id || null, tenaga_ahli_id || null, formatDateForMySQL(tanggal_selesai), req.user.id,
+      estimasi_durasi || null, calculatedProgress, JSON.stringify(tags || []),
+      formatDateForMySQL(start_date), milestone || null, risk_level || 'low', complexity || 'moderate',
+      JSON.stringify(sub_tasks || []), narasi_pekerjaan || null, JSON.stringify(evidence_files || []), link_url || null, status_update || null
     ])
     
     const [newTask] = await db.execute(`
@@ -210,7 +242,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
       tenaga_ahli_id, 
       tanggal_selesai,
       estimasi_durasi,
-      progress_percentage,
       tags,
       start_date,
       milestone,
@@ -228,6 +259,39 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Nama Pekerjaan is required' })
     }
     
+    // Calculate progress based on sub tasks (always auto-calculate)
+    let calculatedProgress = 0
+    let calculatedStatus = status || 'pending'
+    
+    if (sub_tasks && Array.isArray(sub_tasks) && sub_tasks.length > 0) {
+      const totalSubTasks = sub_tasks.length
+      const completedSubTasks = sub_tasks.filter(st => st.status === 'completed').length
+      const inProgressSubTasks = sub_tasks.filter(st => st.status === 'in_progress').length
+      const pendingSubTasks = sub_tasks.filter(st => st.status === 'pending').length
+      
+      if (totalSubTasks === 1) {
+        // Jika ada 1 sub task dan complete maka progress 100%
+        if (completedSubTasks === 1) {
+          calculatedProgress = 100
+          calculatedStatus = 'completed'
+        } else {
+          calculatedProgress = 0
+        }
+      } else {
+        // Jika ada lebih dari 1 sub task maka progress = completed / total * 100
+        calculatedProgress = Math.round((completedSubTasks / totalSubTasks) * 100)
+        
+        // Set status based on sub tasks
+        if (completedSubTasks === totalSubTasks) {
+          calculatedStatus = 'completed'
+        } else if (inProgressSubTasks > 0 || completedSubTasks > 0) {
+          calculatedStatus = 'in_progress'
+        } else {
+          calculatedStatus = 'pending'
+        }
+      }
+    }
+    
     const [result] = await db.execute(`
       UPDATE tasks 
       SET nama_pekerjaan = ?, status = ?, tugas = ?, uraian_tugas = ?, 
@@ -238,10 +302,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
           status_updated_at = CURRENT_TIMESTAMP, status_updated_by = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [nama_pekerjaan, status, tugas, uraian_tugas, prioritas, opd_id, tenaga_ahli_id, formatDateForMySQL(tanggal_selesai),
-        estimasi_durasi, progress_percentage, JSON.stringify(tags),
-        formatDateForMySQL(start_date), milestone, risk_level, complexity,
-        JSON.stringify(sub_tasks), narasi_pekerjaan, JSON.stringify(evidence_files), link_url, status_update, req.user.id,
+    `, [nama_pekerjaan, calculatedStatus, tugas || null, uraian_tugas || null, prioritas || 'medium', opd_id || null, tenaga_ahli_id || null, formatDateForMySQL(tanggal_selesai),
+        estimasi_durasi || null, calculatedProgress, JSON.stringify(tags || []),
+        formatDateForMySQL(start_date), milestone || null, risk_level || 'low', complexity || 'moderate',
+        JSON.stringify(sub_tasks || []), narasi_pekerjaan || null, JSON.stringify(evidence_files || []), link_url || null, status_update || null, req.user.id,
         req.params.id])
     
     if (result.affectedRows === 0) {
